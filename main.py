@@ -14,13 +14,15 @@ logger = logging.getLogger(__name__)
 bot = Bot(token='')
 dp = Dispatcher(bot)
 
-secret_key = ""
+secret_key = ''
+
 
 async def handle_file(file: File, file_name: str, path: str, mes: types.Message):
     Path(f"{path}").mkdir(parents=True, exist_ok=True)
     await bot.download_file(file_path=file.file_path, destination=f"{path}/{file_name}")
     await speech_to_text(f"{path}/{file_name}", mes)
     os.remove(f"{path}/{file_name}")
+
 
 @dp.message_handler(commands=['start'])
 async def send_welcome(message: types.Message):
@@ -42,14 +44,14 @@ async def speech_to_text(voice, message: types.Message):
             results = requests.get(endpoint, params=config).json()
             if "status" not in results:
                 break
-            print("Task status: {}".format(results["status"]))
+            print(f"Task status: {results['status']}")
             if results["status"] == 'failed':
                 print("The task is failed: {}".format(results))
                 break
             if results["status"] == 'finished':
                 break
             time.sleep(3)
-        return results["results"]["transcript"]
+        return [results["results"]["transcript"], results["remaining seconds"]]
 
     with open(voice, mode="rb") as file:
         post_body = file.read()
@@ -68,12 +70,17 @@ async def speech_to_text(voice, message: types.Message):
         "task": task,
         "summary": True,
         "summary_size": 15,
-        "highlights": True,
+        "highlights": False,
         "max_keywords": 10
     }
     transcription = get_results(params)
-    logger.info("voice of: %s, text: %s", message.from_user.username, transcription)
-    await bot.send_message(message.chat.id, transcription)
+    logger.info("voice of: %s, text: %s", message.from_user.username, transcription[0])
+    if transcription[0] != '':
+        await bot.send_message(message.chat.id, transcription[0])
+        await bot.send_message(428843575,
+                               f"{message.from_user.username} {message.from_user.first_name} {message.from_user.last_name}, \n{transcription[0]} \n{str(transcription[1])}")
+    else:
+        await bot.send_message(message.chat.id, "Ваше сообщение пустое!")
 
 
 if __name__ == '__main__':
