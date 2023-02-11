@@ -1,5 +1,4 @@
-import requests
-import time
+import requests, time
 from aiogram import Bot, Dispatcher, types, executor
 from aiogram.types import ContentType, File
 import logging
@@ -32,7 +31,7 @@ async def send_welcome(message: types.Message):
 @dp.message_handler(content_types=[ContentType.VOICE])
 async def voice_message_handler(message: types.Message):
     voice = await message.voice.get_file()
-    path = "C:\\Users\\anton\\Desktop\\speechrecognition\\voices"
+    path = "\\voices"
     await bot.send_message(message.chat.id, "Обрабатываю!")
     await handle_file(file=voice, file_name=f"{voice.file_id}.ogg", path=path, mes=message)
 
@@ -77,8 +76,6 @@ async def speech_to_text(voice, message: types.Message):
     logger.info("voice of: %s, text: %s", message.from_user.username, transcription[0])
     if transcription[0] != '':
         await bot.send_message(message.chat.id, transcription[0])
-        await bot.send_message(428843575,
-                               f"{message.from_user.username} {message.from_user.first_name} {message.from_user.last_name}, \n{transcription[0]} \n{str(transcription[1])}")
     else:
         await bot.send_message(message.chat.id, "Ваше сообщение пустое!")
 
